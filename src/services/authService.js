@@ -1,40 +1,47 @@
-import axios from 'axios';
-import { API_BASE_URL } from '../config/api';
+import { 
+  getAuth, 
+  signInWithEmailAndPassword, 
+  signOut, 
+  createUserWithEmailAndPassword,
+  updateProfile
+} from "firebase/auth";
+
+const auth = getAuth();
 
 const authService = {
-  login: async (credentials) => {
+  login: async ({ email, password }) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/login`, credentials);
-      return response.data;
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      return userCredential.user;
     } catch (error) {
-      throw error.response ? error.response.data : error.message;
+      throw error;
     }
   },
 
   logout: async () => {
     try {
-      await axios.post(`${API_BASE_URL}/logout`);
+      await signOut(auth);
     } catch (error) {
-      throw error.response ? error.response.data : error.message;
+      throw error;
     }
   },
 
-  register: async (userData) => {
+  register: async ({ email, password, displayName }) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/register`, userData);
-      return response.data;
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      if (displayName) {
+        await updateProfile(userCredential.user, { displayName });
+      }
+      return userCredential.user;
     } catch (error) {
-      throw error.response ? error.response.data : error.message;
+      throw error;
     }
   },
 
   getProfile: async () => {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/profile`);
-      return response.data;
-    } catch (error) {
-      throw error.response ? error.response.data : error.message;
-    }
+    const user = auth.currentUser;
+    if (!user) throw new Error('Not authenticated');
+    return user;
   }
 };
 
